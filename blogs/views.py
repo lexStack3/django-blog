@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from .models import Blog, Category
+from django.http import HttpResponseRedirect
+from .models import Blog, Category, Comment
 from django.db.models import Q
 
 # Create your views here.
@@ -20,8 +20,19 @@ def post_by_category(request, category_id):
 
 def blogs(request, slug):
     single_blog = get_object_or_404(Blog, slug=slug, status="Published")
+    if request.method == 'POST':
+        comment = Comment()
+        comment.user = request.user
+        comment.blog = single_blog
+        comment.comment = request.POST.get('comment')
+        comment.save()
+        # Redirecting to the same path the form came from
+        return HttpResponseRedirect(request.path_info)
+    # Comment
+    comments = Comment.objects.filter(blog=single_blog)
     context = {
-        'single_blog': single_blog
+        'single_blog': single_blog,
+        'comments': comments
     }
     return render(request, 'blogs.html', context)
 
